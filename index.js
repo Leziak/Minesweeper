@@ -1,7 +1,9 @@
 class Square {
-    constructor(bomb = false, count = 0) {
+    constructor(bomb = false, count = 0, x = 0, y = 0) {
         this.bomb = bomb;
         this.count = count;
+        this.x = x;
+        this.y = y;
     }
 }
 
@@ -41,13 +43,6 @@ const fill_board = (board, nums) => {
     return board;
 }
 
-let board_size = 480;
-let mines_amount = 240;
-
-let nums = generate_nums(mines_amount, board_size);
-let board = generate_board(board_size);
-let filled_board = fill_board(board, nums);
-
 //Create a grid from filled board
 
 const create_grid = (board, rows) => {
@@ -55,16 +50,25 @@ const create_grid = (board, rows) => {
     for (let i = 0; i < board.length; i += rows) {
         grid.push(board.slice(i, i + rows));
     }
+    enumerate(grid);
     return grid;
 }
 
-let grid = create_grid(filled_board, 24);
+const enumerate = (grid) => {
+    for(let i = 0;i < grid.length;i++) {
+        for(let j = 0;j < grid[i].length; j++) {
+            grid[i][j].x=j;
+            grid[i][j].y=i;
+        }
+    }
+}
 
 const check_for_bombs = (grid) => {
     for (let i = 0; i < grid.length; i++) {
         for (let j = 0; j < grid[i].length; j++) {
             if (!grid[i][j].bomb) {
-                if (j!==grid[i].length-1)if (grid[i][j + 1].bomb) grid[i][j].count++;
+                
+                if (j!==grid[i].length-1) if (grid[i][j + 1].bomb) grid[i][j].count++;
                 if (j!==0) if (grid[i][j - 1].bomb) grid[i][j].count++;
                 if (i!==grid.length-1) if (grid[i + 1][j].bomb) grid[i][j].count++;
                 if (i!==0) if (grid[i - 1][j].bomb) grid[i][j].count++;
@@ -81,13 +85,65 @@ const css_board = (grid) => {
     check_for_bombs(grid);
     grid.forEach(row => {
         row.forEach((square, index) => {
-            document.querySelector('#container').innerHTML += '<div class="square">' + (square.bomb ? '<img src="bomb.jpg">' : '') + '<div>';
+            document.querySelector('#container').innerHTML += `<div x=${square.x} y=${square.y} class="square">` + (square.bomb ? '<img src="bomb.jpg">' : '')
+                 + (square.count ? `<img src="${square.count}.png">` : '') + '<div>';
         })
     })
 }
 
-css_board(grid);
+const css_gameplay = () => {
+    $('.square').click(function () {
+        $(this).find('img').css('opacity', '1');
+        if ($(this).find('img').attr('src')==='bomb.jpg') {
+            //REVEAL THE BOARD -> GAME OVER
+            $('.square').find('img').css('opacity', '1')
+        } else if (!$(this).find('img').attr('src')) {
+            //HANDLE EMPTY FIELD (UNREADABLE I KNOW)
+            let x = Number($(this).attr('x'));
+            let y = Number($(this).attr('y'));
+            console.log(game[y][x])
 
-$('.square').click(function () {
-    $(this).find('img').css('opacity', '1');
+
+        }
+    })
+}
+
+const bomb_handler = () => {
+
+}
+
+
+
+const new_game = (board_size=480, mines_amount = 99, rows = 24) => {
+
+    $('#container').empty();
+    let count = 0;
+
+    let nums = generate_nums(mines_amount, board_size);
+    let board = generate_board(board_size);
+    let filled_board = fill_board(board, nums);
+    let grid = create_grid(filled_board, rows);
+
+    css_board(grid);
+    css_gameplay();
+    return grid;
+}
+
+
+
+
+let game = new_game();
+
+
+
+$('#easy').click(() => {
+    game = new_game(240,40,12);
+})
+
+// $('#medium').click(() => {
+//     new_game(240,40,12);
+// })
+
+$('#hard').click(() => {
+   game = new_game(480,99,24);
 })
